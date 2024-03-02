@@ -60,6 +60,25 @@ public class UnchaMunchaBotController extends AbstractUpdateController {
 
     // For checking (/start, /language, /help, /about_owners, /connection)
     private boolean checkCommon(Update update, ProfileDTO currentProfile) {
+        if (update.getMessage().hasText()) {
+            String text = update.getMessage().getText();
+            if (text.equals("/start")) {
+                // logic
+                return true;
+            }else if (text.equals("/language")) {
+                // logic
+                return true;
+            } else if (text.equals("/help")) {
+                // logic
+                return true;
+            } else if (text.equals("/about_owners")) {
+                // logic
+                return true;
+            } else if (text.equals("/connection")) {
+                // logic
+                return true;
+            }
+        }
         return false;
     }
 

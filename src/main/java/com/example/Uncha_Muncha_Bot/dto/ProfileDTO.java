@@ -4,7 +4,7 @@ package com.example.Uncha_Muncha_Bot.dto;
 import com.example.Uncha_Muncha_Bot.enums.ActiveStatus;
 import com.example.Uncha_Muncha_Bot.enums.Language;
 import com.example.Uncha_Muncha_Bot.enums.ProfileRole;
-import com.example.Uncha_Muncha_Bot.enums.SelectedPurchaseType;
+import com.example.Uncha_Muncha_Bot.enums.SalaryType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 @Setter
 @Getter
 public class ProfileDTO {
-    private Integer id;
+    private Long id;
     private ActiveStatus acctiveStatus;
     private String phone;
     private String username;
@@ -29,11 +29,11 @@ public class ProfileDTO {
     private String chatId;
     private ProfileRole role;
     private String currentStep;
-    private SelectedPurchaseType selectedPurchaseType;
+    private SalaryType selectedPurchaseType;
     private Integer changingElementId;
     private Language language=Language.uz;
 
-    public ProfileDTO(Integer id, String username, String chatId) {
+    public ProfileDTO(Long id, String username, String chatId) {
         this.id = id;
         this.username = username;
         this.chatId = chatId;
