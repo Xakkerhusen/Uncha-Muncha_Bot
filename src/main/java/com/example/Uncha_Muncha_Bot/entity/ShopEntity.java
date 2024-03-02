@@ -12,15 +12,12 @@ import java.util.List;
 
 @Setter
 @Getter
+@Entity
+@Table(name = "shop")
 public class ShopEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
-
-    @ElementCollection
-    @CollectionTable(name = "shop_type", joinColumns = @JoinColumn(name = "shop_id"))
-    @Column(name = "shop_types")
-    private List<ShopTypeDTO> shopTypes;
 
     @Column(name = "city")
     private String city;

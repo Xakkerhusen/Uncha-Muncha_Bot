@@ -3,10 +3,7 @@ package com.example.Uncha_Muncha_Bot.entity;
 import com.example.Uncha_Muncha_Bot.dto.AutomobileServiceTypeDTO;
 import com.example.Uncha_Muncha_Bot.enums.ActiveStatus;
 import com.example.Uncha_Muncha_Bot.enums.CarType;
-import jakarta.persistence.Column;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -16,6 +13,8 @@ import java.util.List;
 
 @Setter
 @Getter
+@Entity
+@Table(name = "automobile_service")
 public class AutomobileServiceEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)

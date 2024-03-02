@@ -11,6 +11,8 @@ import java.time.LocalTime;
 
 @Setter
 @Getter
+@Entity
+@Table(name = "home")
 public class HomeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)

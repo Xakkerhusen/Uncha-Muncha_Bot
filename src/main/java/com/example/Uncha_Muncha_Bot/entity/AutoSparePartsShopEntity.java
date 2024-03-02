@@ -1,10 +1,7 @@
 package com.example.Uncha_Muncha_Bot.entity;
 
 import com.example.Uncha_Muncha_Bot.enums.ActiveStatus;
-import jakarta.persistence.Column;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,6 +10,8 @@ import java.time.LocalTime;
 
 @Setter
 @Getter
+@Entity
+@Table(name = "auto_spare_parts_shop")
 public class AutoSparePartsShopEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)

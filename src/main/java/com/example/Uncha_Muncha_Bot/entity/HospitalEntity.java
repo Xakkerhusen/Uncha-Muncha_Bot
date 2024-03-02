@@ -12,6 +12,8 @@ import java.util.List;
 
 @Setter
 @Getter
+@Entity
+@Table(name = "hospital")
 public class HospitalEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)

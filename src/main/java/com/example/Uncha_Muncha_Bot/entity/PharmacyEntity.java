@@ -11,6 +11,8 @@ import java.time.LocalTime;
 
 @Setter
 @Getter
+@Entity
+@Table(name = "pharmacy")
 public class PharmacyEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)

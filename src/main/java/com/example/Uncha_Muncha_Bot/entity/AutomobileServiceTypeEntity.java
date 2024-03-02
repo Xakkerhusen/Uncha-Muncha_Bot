@@ -1,14 +1,13 @@
 package com.example.Uncha_Muncha_Bot.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
 @Setter
 @Getter
+@Entity
+@Table(name = "automobile_service_type")
 public class AutomobileServiceTypeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)

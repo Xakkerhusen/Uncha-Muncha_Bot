@@ -12,6 +12,8 @@ import java.util.List;
 
 @Setter
 @Getter
+@Entity
+@Table(name = "home_service")
 public class HomeServiceEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
