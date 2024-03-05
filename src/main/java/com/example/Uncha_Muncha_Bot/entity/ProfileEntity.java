@@ -68,7 +68,7 @@ public class ProfileEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "language")
-    private Language language = Language.uz;
+    private Language language;
 
     public ProfileEntity(Long id, String username, String chatId) {
         this.id = id;

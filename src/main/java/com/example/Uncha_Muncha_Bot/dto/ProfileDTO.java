@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 @Getter
 public class ProfileDTO {
     private Long id;
-    private ActiveStatus acctiveStatus;
+    private ActiveStatus activeStatus;
     private String phone;
     private String username;
     private LocalDateTime createdDateTime;
@@ -31,7 +31,7 @@ public class ProfileDTO {
     private String currentStep;
     private SalaryType selectedPurchaseType;
     private Integer changingElementId;
-    private Language language=Language.uz;
+    private Language language;
 
     public ProfileDTO(Long id, String username, String chatId) {
         this.id = id;
