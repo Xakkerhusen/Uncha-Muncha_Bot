@@ -1,7 +1,9 @@
 package com.example.Uncha_Muncha_Bot.repository;
 
 import com.example.Uncha_Muncha_Bot.entity.ProfileEntity;
+import com.example.Uncha_Muncha_Bot.enums.ActiveStatus;
 import com.example.Uncha_Muncha_Bot.enums.Language;
+import com.example.Uncha_Muncha_Bot.enums.ProfileRole;
 import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -40,4 +42,19 @@ public interface ProfileRepository extends CrudRepository<ProfileEntity,Long>, P
     @Modifying
     @Query("update ProfileEntity set username=?1 where chatId=?2")
     void updateUsername(String userName, String chatId);
+
+    @Transactional
+    @Modifying
+    @Query("update ProfileEntity set role=?2 where chatId=?1")
+    void changeRole(String chatId, ProfileRole profileRole);
+
+    @Transactional
+    @Modifying
+    @Query("update ProfileEntity set activeStatus=?2 where chatId=?1")
+    void changeStatus(String chatId, ActiveStatus activeStatus);
+
+    @Transactional
+    @Modifying
+    @Query("update ProfileEntity set changingElementId=?2 where chatId=?1")
+    void changeChangingElementId(String chatId, Long advertisingId);
 }

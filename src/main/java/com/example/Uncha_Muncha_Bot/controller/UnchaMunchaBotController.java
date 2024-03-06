@@ -2,14 +2,19 @@ package com.example.Uncha_Muncha_Bot.controller;
 
 import com.example.Uncha_Muncha_Bot.constants.CommonConstants;
 import com.example.Uncha_Muncha_Bot.constants.SuperAdminConstants;
+import com.example.Uncha_Muncha_Bot.dto.AdvertisingDTO;
+import com.example.Uncha_Muncha_Bot.dto.MediaDTO;
 import com.example.Uncha_Muncha_Bot.dto.ProfileDTO;
 import com.example.Uncha_Muncha_Bot.enums.ActiveStatus;
 import com.example.Uncha_Muncha_Bot.enums.Language;
+import com.example.Uncha_Muncha_Bot.enums.MediaType;
 import com.example.Uncha_Muncha_Bot.enums.ProfileRole;
 import com.example.Uncha_Muncha_Bot.markUps.MarkUpsAdmin;
 import com.example.Uncha_Muncha_Bot.markUps.MarkUps;
 import com.example.Uncha_Muncha_Bot.markUps.MarkUpsSuperAdmin;
 import com.example.Uncha_Muncha_Bot.markUps.MarkUpsUser;
+import com.example.Uncha_Muncha_Bot.service.AdvertisingService;
+import com.example.Uncha_Muncha_Bot.service.MediaService;
 import com.example.Uncha_Muncha_Bot.service.ProfileService;
 import com.example.Uncha_Muncha_Bot.service.ResourceBundleService;
 import io.github.nazarovctrl.telegrambotspring.bot.MessageSender;
@@ -22,11 +27,13 @@ import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.xssf.usermodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.*;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.*;
+import org.telegram.telegrambots.meta.api.objects.media.InputMedia;
+import org.telegram.telegrambots.meta.api.objects.media.InputMediaPhoto;
+import org.telegram.telegrambots.meta.api.objects.media.InputMediaVideo;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -35,6 +42,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.LinkedList;
 import java.util.List;
 
 @Slf4j
@@ -61,10 +69,28 @@ public class UnchaMunchaBotController extends AbstractUpdateController {
     @Autowired
     private MarkUpsUser markUpsUser;
 
+    @Autowired
+    private AdvertisingService advertisingService;
+
+    @Autowired
+    private MediaService mediaService;
+
     @Override
     public void handle(Update update) {
         if (update.hasMessage()) {
             ProfileDTO currentProfile = profileService.getByChatId(update.getMessage().getChatId().toString());
+            /**For checking status (Block!)*/
+            if (currentProfile != null && currentProfile.getActiveStatus() != null) {
+                if (currentProfile.getActiveStatus().equals(ActiveStatus.BLOCK)) {
+                    if (currentProfile.getLanguage() != null) {
+                        executeMessage(new SendMessage(currentProfile.getChatId(), resourceBundleService.getMessage("you.are.blocked", currentProfile.getLanguage())));
+                    } else {
+                        executeMessage(new SendMessage(currentProfile.getChatId(), resourceBundleService.getMessage("you.are.blocked", Language.uz)));
+                    }
+                    return;
+                }
+            }
+
             /** Update Username*/
             if (currentProfile != null && update.getMessage().getFrom().getUserName() != null) {
                 String userName = update.getMessage().getFrom().getUserName();
@@ -74,7 +100,7 @@ public class UnchaMunchaBotController extends AbstractUpdateController {
             }
             /**For checking (/start,/help, ...) commands*/
             if (currentProfile != null && currentProfile.getPhone() != null) {
-                if (checkCommond(update, currentProfile)) {
+                if (checkCommand(update, currentProfile)) {
                     return;
                 }
             }
@@ -94,6 +120,18 @@ public class UnchaMunchaBotController extends AbstractUpdateController {
             }
         } else if (update.hasCallbackQuery()) {
             ProfileDTO currentProfile = profileService.getByChatId(update.getCallbackQuery().getMessage().getChatId().toString());
+            /**For checking status (Block!)*/
+            if (currentProfile != null && currentProfile.getActiveStatus() != null) {
+                if (currentProfile.getActiveStatus().equals(ActiveStatus.BLOCK)) {
+                    if (currentProfile.getLanguage() != null) {
+                        executeMessage(new SendMessage(currentProfile.getChatId(), resourceBundleService.getMessage("you.are.blocked", currentProfile.getLanguage())));
+                    } else {
+                        executeMessage(new SendMessage(currentProfile.getChatId(), resourceBundleService.getMessage("you.are.blocked", Language.uz)));
+                    }
+                    return;
+                }
+            }
+
             /** Update Username*/
             if (currentProfile != null && update.getCallbackQuery().getFrom().getUserName() != null) {
                 String userName = update.getCallbackQuery().getFrom().getUserName();
@@ -252,11 +290,40 @@ public class UnchaMunchaBotController extends AbstractUpdateController {
      */
     private void messageSuperAdmin(Update update, ProfileDTO currentProfile) {
         Message message = update.getMessage();
+
+        if (message.hasPhoto() || message.hasVideo() || message.hasLocation()) {
+            if (currentProfile.getCurrentStep().equals(SuperAdminConstants.ENTERING_MEDIA_FOR_ADVERTISING)) {
+                if (message.hasPhoto() || message.hasVideo()) {
+                    List<PhotoSize> photo = message.getPhoto();
+                    PhotoSize photoSize1 = photo.get(0);
+                    for (PhotoSize photoSize : photo) {
+                        if (photoSize.getFileId().length() > photoSize1.getFileId().length()) {
+                            photoSize1 = photoSize;
+                        }
+                    }
+                    String fileId = photoSize1.getFileId();
+                    MediaDTO media = new MediaDTO();
+                    media.setFId(fileId);
+                    media.setOwnerId(currentProfile.getChangingElementId());
+                    if (message.hasPhoto()) {
+                        media.setMediaType(MediaType.PHOTO);
+                    } else {
+                        media.setMediaType(MediaType.VIDEO);
+                    }
+                    mediaService.save(media);
+                    executeMessage(new SendMessage(currentProfile.getChatId(), resourceBundleService.getMessage("media.saved",currentProfile.getLanguage())));
+                }
+            }
+            return;
+        }
+
+        String text = message.getText();
         String chatId = message.getChatId().toString();
         Language language = currentProfile.getLanguage();
-        if (currentProfile.getCurrentStep().equals(SuperAdminConstants.GETTING_BY_CHAT_ID)) {
+        String currentStep = currentProfile.getCurrentStep();
+        if (currentStep.equals(SuperAdminConstants.GETTING_BY_CHAT_ID)) {
             try {
-                Long profileChatId=Long.valueOf(message.getText());
+                Long profileChatId = Long.valueOf(text);
                 ProfileDTO profileDTO = profileService.getByChatId(profileChatId.toString());
                 if (profileDTO != null) {
                     executeUserList(chatId, language, message, List.of(profileDTO), "profileByChatId");
@@ -267,12 +334,197 @@ public class UnchaMunchaBotController extends AbstractUpdateController {
                     sendMessage.setReplyMarkup(markUpsSuperAdmin.menu(language));
                     executeMessage(sendMessage);
                 }
-                profileService.changeStep(chatId,SuperAdminConstants.MENU);
-            }catch (Exception e){
+                profileService.changeStep(chatId, SuperAdminConstants.MENU);
+            } catch (Exception e) {
                 log.warn(e.getMessage());
-                sendMessageAboutInvalidInput(currentProfile.getLanguage(),chatId);
+                sendMessageAboutInvalidInput(currentProfile.getLanguage(), chatId);
+            }
+        } else if (currentStep.equals(SuperAdminConstants.ENTERING_ID_FOR_MAKE_ADMIN)) {
+            try {
+                Long profileChatId = Long.valueOf(text);
+                ProfileDTO profileDTO = profileService.getByChatId(profileChatId.toString());
+                if (profileDTO != null) {
+                    if (text.equals(chatId)) {
+                        return;
+                    }
+                    profileService.changeRole(text, ProfileRole.ADMIN);
+                    StringBuilder info = new StringBuilder();
+                    if (currentProfile.getUsername() != null) {
+                        info.append("Username :: ").append(profileDTO.getUsername());
+                    }
+                    if (currentProfile.getName() != null) {
+                        info.append("\nName :: ").append(profileDTO.getName());
+                    }
+                    if (currentProfile.getSurname() != null) {
+                        info.append("\nSurname :: ").append(profileDTO.getSurname());
+                    }
+                    info.append("\nRole :: ADMIN ✅");
+                    executeMessage(new SendMessage(chatId, info.toString()));
+                    SendMessage sendMessage = new SendMessage(chatId, SuperAdminConstants.MENU);
+                    sendMessage.setReplyMarkup(markUpsSuperAdmin.menu(language));
+                    executeMessage(sendMessage);
+                } else {
+                    executeDeleteMessage(new DeleteMessage(chatId, message.getMessageId()));
+                    executeMessage(new SendMessage(chatId, resourceBundleService.getMessage("user.not.found", language)));
+                    SendMessage sendMessage = new SendMessage(chatId, SuperAdminConstants.MENU);
+                    sendMessage.setReplyMarkup(markUpsSuperAdmin.menu(language));
+                    executeMessage(sendMessage);
+                }
+                profileService.changeStep(chatId, SuperAdminConstants.MENU);
+            } catch (Exception e) {
+                log.warn(e.getMessage());
+                sendMessageAboutInvalidInput(currentProfile.getLanguage(), chatId);
+            }
+        } else if (currentStep.equals(SuperAdminConstants.ENTERING_ID_FOR_MAKE_USER)) {
+            try {
+                Long profileChatId = Long.valueOf(text);
+                ProfileDTO profileDTO = profileService.getByChatId(profileChatId.toString());
+                if (profileDTO != null) {
+                    if (text.equals(chatId)) {
+                        return;
+                    }
+                    profileService.changeRole(text, ProfileRole.USER);
+                    StringBuilder info = new StringBuilder();
+                    if (currentProfile.getUsername() != null) {
+                        info.append("Username :: ").append(profileDTO.getUsername());
+                    }
+                    if (currentProfile.getName() != null) {
+                        info.append("\nName :: ").append(profileDTO.getName());
+                    }
+                    if (currentProfile.getSurname() != null) {
+                        info.append("\nSurname :: ").append(profileDTO.getSurname());
+                    }
+                    info.append("\nRole :: USER ✅");
+                    executeMessage(new SendMessage(chatId, info.toString()));
+                    SendMessage sendMessage = new SendMessage(chatId, SuperAdminConstants.MENU);
+                    sendMessage.setReplyMarkup(markUpsSuperAdmin.menu(language));
+                    executeMessage(sendMessage);
+                } else {
+                    executeDeleteMessage(new DeleteMessage(chatId, message.getMessageId()));
+                    executeMessage(new SendMessage(chatId, resourceBundleService.getMessage("user.not.found", language)));
+                    SendMessage sendMessage = new SendMessage(chatId, SuperAdminConstants.MENU);
+                    sendMessage.setReplyMarkup(markUpsSuperAdmin.menu(language));
+                    executeMessage(sendMessage);
+                }
+                profileService.changeStep(chatId, SuperAdminConstants.MENU);
+            } catch (Exception e) {
+                log.warn(e.getMessage());
+                sendMessageAboutInvalidInput(currentProfile.getLanguage(), chatId);
+            }
+        } else if (currentStep.equals(SuperAdminConstants.ENTERING_ID_FOR_MAKE_ACTIVE)) {
+            try {
+                Long profileChatId = Long.valueOf(text);
+                ProfileDTO profileDTO = profileService.getByChatId(profileChatId.toString());
+                if (profileDTO != null) {
+                    if (text.equals(chatId)) {
+                        return;
+                    }
+                    profileService.changeStatus(text, ActiveStatus.ACTIVE);
+                    StringBuilder info = new StringBuilder();
+                    if (currentProfile.getUsername() != null) {
+                        info.append("Username :: ").append(profileDTO.getUsername());
+                    }
+                    if (currentProfile.getName() != null) {
+                        info.append("\nName :: ").append(profileDTO.getName());
+                    }
+                    if (currentProfile.getSurname() != null) {
+                        info.append("\nSurname :: ").append(profileDTO.getSurname());
+                    }
+                    info.append("\nStatus :: ACTIVE ✅");
+                    executeMessage(new SendMessage(chatId, info.toString()));
+                    SendMessage sendMessage = new SendMessage(chatId, SuperAdminConstants.MENU);
+                    sendMessage.setReplyMarkup(markUpsSuperAdmin.menu(language));
+                    executeMessage(sendMessage);
+                } else {
+                    executeDeleteMessage(new DeleteMessage(chatId, message.getMessageId()));
+                    executeMessage(new SendMessage(chatId, resourceBundleService.getMessage("user.not.found", language)));
+                    SendMessage sendMessage = new SendMessage(chatId, SuperAdminConstants.MENU);
+                    sendMessage.setReplyMarkup(markUpsSuperAdmin.menu(language));
+                    executeMessage(sendMessage);
+                }
+                profileService.changeStep(chatId, SuperAdminConstants.MENU);
+            } catch (Exception e) {
+                log.warn(e.getMessage());
+                sendMessageAboutInvalidInput(currentProfile.getLanguage(), chatId);
+            }
+        } else if (currentStep.equals(SuperAdminConstants.ENTERING_ID_FOR_MAKE_BLOCK)) {
+            try {
+                Long profileChatId = Long.valueOf(text);
+                ProfileDTO profileDTO = profileService.getByChatId(profileChatId.toString());
+                if (profileDTO != null) {
+                    if (text.equals(chatId)) {
+                        return;
+                    }
+                    profileService.changeStatus(text, ActiveStatus.BLOCK);
+                    StringBuilder info = new StringBuilder();
+                    if (currentProfile.getUsername() != null) {
+                        info.append("Username :: ").append(profileDTO.getUsername());
+                    }
+                    if (currentProfile.getName() != null) {
+                        info.append("\nName :: ").append(profileDTO.getName());
+                    }
+                    if (currentProfile.getSurname() != null) {
+                        info.append("\nSurname :: ").append(profileDTO.getSurname());
+                    }
+                    info.append("\nStatus :: BLOCK ✅");
+                    executeMessage(new SendMessage(chatId, info.toString()));
+                    SendMessage sendMessage = new SendMessage(chatId, SuperAdminConstants.MENU);
+                    sendMessage.setReplyMarkup(markUpsSuperAdmin.menu(language));
+                    executeMessage(sendMessage);
+                } else {
+                    executeDeleteMessage(new DeleteMessage(chatId, message.getMessageId()));
+                    executeMessage(new SendMessage(chatId, resourceBundleService.getMessage("user.not.found", language)));
+                    SendMessage sendMessage = new SendMessage(chatId, SuperAdminConstants.MENU);
+                    sendMessage.setReplyMarkup(markUpsSuperAdmin.menu(language));
+                    executeMessage(sendMessage);
+                }
+                profileService.changeStep(chatId, SuperAdminConstants.MENU);
+            } catch (Exception e) {
+                log.warn(e.getMessage());
+                sendMessageAboutInvalidInput(currentProfile.getLanguage(), chatId);
+            }
+        } else if (currentStep.equals(SuperAdminConstants.ENTERING_TEXT_FOR_ADVERTISING)) {
+            if (text.equals(resourceBundleService.getMessage("back", language))) {
+                SendMessage sendMessage1 = new SendMessage(chatId, resourceBundleService.getMessage("cancel.successfully", currentProfile.getLanguage()));
+                sendMessage1.setReplyMarkup(new ReplyKeyboardRemove(true));
+                executeMessage(sendMessage1);
+                SendMessage sendMessage = new SendMessage(chatId, resourceBundleService.getMessage("confirmation", currentProfile.getLanguage()));
+                sendMessage.setReplyMarkup(markUpsSuperAdmin.getAccept(currentProfile.getLanguage()));
+                executeMessage(sendMessage);
+                profileService.changeStep(chatId, SuperAdminConstants.ACCEPTING_TO_CREATE_ADVERTISING);
+                return;
+            }
+            Long advertisingId = advertisingService.create(chatId, text);
+            profileService.changeChangingElementId(chatId, advertisingId);
+            profileService.changeStep(chatId, SuperAdminConstants.ENTERING_MEDIA_FOR_ADVERTISING);
+            SendMessage sendMessage = new SendMessage(chatId, resourceBundleService.getMessage("entering.media", language));
+            sendMessage.setReplyMarkup(markUps.getNextAndBackButtons(language));
+            executeMessage(sendMessage);
+        } else if (currentProfile.getCurrentStep().equals(SuperAdminConstants.ENTERING_MEDIA_FOR_ADVERTISING)) {
+            if (text.equals(resourceBundleService.getMessage("back", language))) {
+                profileService.changeStep(chatId, SuperAdminConstants.ENTERING_TEXT_FOR_ADVERTISING);
+                executeMessage(new SendMessage(chatId, resourceBundleService.getMessage("enter.description", language)));
+                SendMessage sendMessage = new SendMessage(chatId, resourceBundleService.getMessage("or.come.back", language));
+                sendMessage.setReplyMarkup(markUps.getBackButton(currentProfile.getLanguage()));
+                executeMessage(sendMessage);
+            } else if (text.equals(resourceBundleService.getMessage("next", language))) {
+                checkToSandAdvertising(currentProfile);
+                profileService.changeStep(chatId, SuperAdminConstants.ACCEPT_TO_SEND_ADVERTISING);
+                SendMessage sendMessage = new SendMessage(chatId, resourceBundleService.getMessage("confirmation", language));
+                sendMessage.setReplyMarkup(markUpsSuperAdmin.getAccept(language));
+                executeMessage(sendMessage);
             }
         }
+    }
+
+    private void checkToSandAdvertising(ProfileDTO currentProfile) {
+        Long advertisingId = currentProfile.getChangingElementId();
+        AdvertisingDTO advertisingDTO = advertisingService.getById(advertisingId);
+        String advertisingDTOText = advertisingDTO.getText();
+        String chatId = currentProfile.getChatId();
+        Language language = currentProfile.getLanguage();
+        sendMedia(advertisingId, advertisingDTOText, chatId);
+
     }
 
     /**
@@ -333,11 +585,53 @@ public class UnchaMunchaBotController extends AbstractUpdateController {
             } else if (data.equals(SuperAdminConstants.GET_BY_CHAT_ID)) {
                 sendUserByChatId(message, chatId, currentProfile.getLanguage());
             } else if (data.equals(SuperAdminConstants.CREATE_ADVERTISING)) {
-
+                EditMessageText editMessageText = new EditMessageText();
+                editMessageText.setText(resourceBundleService.getMessage("confirmation", currentProfile.getLanguage()));
+                editMessageText.setChatId(chatId);
+                editMessageText.setReplyMarkup(markUpsSuperAdmin.getAccept(currentProfile.getLanguage()));
+                editMessageText.setMessageId(message.getMessageId());
+                executeEditMessage(editMessageText);
+                profileService.changeStep(chatId, SuperAdminConstants.ACCEPTING_TO_CREATE_ADVERTISING);
+            }
+        } else if (currentStep.equals(SuperAdminConstants.ACCEPTING_TO_CREATE_ADVERTISING)) {
+            if (data.equals(SuperAdminConstants.ACCEPT)) {
+                profileService.changeStep(chatId, SuperAdminConstants.ENTERING_TEXT_FOR_ADVERTISING);
+                EditMessageText editMessageText = new EditMessageText(resourceBundleService.getMessage("enter.description", profileLanguage));
+                editMessageText.setMessageId(query.getMessage().getMessageId());
+                editMessageText.setChatId(chatId);
+                executeEditMessage(editMessageText);
+                SendMessage sendMessage = new SendMessage(chatId, resourceBundleService.getMessage("or.come.back", profileLanguage));
+                sendMessage.setReplyMarkup(markUps.getBackButton(currentProfile.getLanguage()));
+                executeMessage(sendMessage);
+            } else if (data.equals(SuperAdminConstants.NO_ACCEPT)) {
+                profileService.changeStep(chatId, SuperAdminConstants.MENU);
+                EditMessageText editMessageText = new EditMessageText(resourceBundleService.getMessage("super.admin.menu", profileLanguage));
+                editMessageText.setMessageId(query.getMessage().getMessageId());
+                editMessageText.setChatId(chatId);
+                editMessageText.setReplyMarkup((InlineKeyboardMarkup) markUpsSuperAdmin.menu(currentProfile.getLanguage()));
+                executeEditMessage(editMessageText);
+            }
+        } else if (currentStep.equals(SuperAdminConstants.ACCEPT_TO_SEND_ADVERTISING)) {
+            if (data.equals(SuperAdminConstants.ACCEPT)) {
+                Long advertisingId = currentProfile.getChangingElementId();
+                AdvertisingDTO advertisingDTO = advertisingService.getById(advertisingId);
+                String advertisingDTOText = advertisingDTO.getText();
+                profileService.changeStep(chatId, SuperAdminConstants.MENU);
+                sendMedia(advertisingId, advertisingDTOText, null);
+                SendMessage sendMessage1 = new SendMessage(chatId, resourceBundleService.getMessage("advertisement.has.been.sent", profileLanguage));
+                sendMessage1.setReplyMarkup(new ReplyKeyboardRemove(true));
+                executeMessage(sendMessage1);
+                SendMessage sendMessage = new SendMessage(chatId, resourceBundleService.getMessage("super.admin.menu", profileLanguage));
+                sendMessage.setReplyMarkup(markUpsSuperAdmin.menu(currentProfile.getLanguage()));
+                executeMessage(sendMessage);
+            } else if (data.equals(SuperAdminConstants.NO_ACCEPT)) {
+                profileService.changeStep(chatId, SuperAdminConstants.ENTERING_MEDIA_FOR_ADVERTISING);
+                SendMessage sendMessage = new SendMessage(chatId, resourceBundleService.getMessage("entering.media", profileLanguage));
+                sendMessage.setReplyMarkup(markUps.getNextAndBackButtons(profileLanguage));
+                executeMessage(sendMessage);
             }
         }
     }
-
 
     private void sendAllProfileList(Message message, String chatId, Language language) {
         List<ProfileDTO> users = profileService.getAllByRole(List.of(ProfileRole.SUPER_ADMIN, ProfileRole.ADMIN, ProfileRole.USER));
@@ -555,6 +849,39 @@ public class UnchaMunchaBotController extends AbstractUpdateController {
         }
     }
 
+    /**
+     * For execute SendPhoto
+     */
+    private void executePhoto(SendPhoto sendPhoto) {
+        try {
+            messageSender.execute(sendPhoto);
+        } catch (TelegramApiException e) {
+            log.warn(e.getMessage());
+        }
+    }
+
+    /**
+     * For execute SendVideo
+     */
+    private void executeVideo(SendVideo sendVideo) {
+        try {
+            messageSender.execute(sendVideo);
+        } catch (TelegramApiException e) {
+            log.warn(e.getMessage());
+        }
+    }
+
+    /**
+     * For execute SendMediaGroup
+     */
+    private void executeMediaGroup(SendMediaGroup sendMediaGroup) {
+        try {
+            messageSender.execute(sendMediaGroup);
+        } catch (TelegramApiException e) {
+            log.warn(e.getMessage());
+        }
+    }
+
     // ===================================== GENERAL ===================
 
     /**
@@ -567,8 +894,8 @@ public class UnchaMunchaBotController extends AbstractUpdateController {
     /**
      * For checking (/start, /language, /help, /about_owners, /connection)
      */
-    private boolean checkCommond(Update update, ProfileDTO currentProfile) {
-        if (!(currentProfile != null&&currentProfile.getPhone()!=null)) {
+    private boolean checkCommand(Update update, ProfileDTO currentProfile) {
+        if (!(currentProfile != null && currentProfile.getPhone() != null)) {
             return false;
         }
 
@@ -636,7 +963,7 @@ public class UnchaMunchaBotController extends AbstractUpdateController {
                 }
 
                 /**Here the (,) after the last username is removed*/
-                info = new StringBuilder(info.substring(0, info.length() - 1));
+                info = new StringBuilder(info.substring(0, info.length() - 1)).append("\n");
                 info.append(resourceBundleService.getMessage("bot.info.2", language));
 
                 /** The total number of users is added here */
@@ -676,6 +1003,62 @@ public class UnchaMunchaBotController extends AbstractUpdateController {
         sendMessage.setText(resourceBundleService.getMessage("invalid.query.entered", language));
         sendMessage.setChatId(chatId);
         executeMessage(sendMessage);
+    }
+
+    private void sendMedia(Long ownerId, String text, String chatId) {
+        List<MediaDTO> mediaList = mediaService.getByOwnerId(ownerId);
+        List<ProfileDTO> profileDTOList = profileService.getAllByRole(List.of(ProfileRole.SUPER_ADMIN, ProfileRole.ADMIN, ProfileRole.USER));
+        if (chatId != null) {
+            profileDTOList = List.of(profileService.getByChatId(chatId));
+        }
+        if (mediaList.size() == 0) {
+            for (ProfileDTO profile : profileDTOList) {
+                executeMessage(new SendMessage(profile.getChatId(), text));
+            }
+            return;
+        }
+        for (ProfileDTO profile : profileDTOList) {
+            int mediaSize = mediaList.size();
+            int count = 0;
+            List<InputMedia> inputMediaList = new LinkedList<>();
+            for (MediaDTO media : mediaList) {
+                if (mediaSize % 10 == 1 && count + 1 == mediaSize) {
+                    break;
+                }
+                if (media.getMediaType().equals(MediaType.PHOTO)) {
+                    InputMedia photo = new InputMediaPhoto();
+                    photo.setMedia(media.getFId());
+                    inputMediaList.add(photo);
+                } else if (media.getMediaType().equals(MediaType.VIDEO)) {
+                    InputMedia photo = new InputMediaVideo();
+                    photo.setMedia(media.getFId());
+                    inputMediaList.add(photo);
+                }
+                count++;
+            }
+            if (mediaSize > 1) {
+                SendMediaGroup sendMediaGroup = new SendMediaGroup();
+                sendMediaGroup.setMedias(inputMediaList);
+                sendMediaGroup.setChatId(profile.getChatId());
+                executeMediaGroup(sendMediaGroup);
+            }
+            if (count + 1 == mediaSize) {
+                MediaDTO media = mediaList.get(mediaSize - 1);
+                if (media.getMediaType().equals(MediaType.PHOTO)) {
+                    SendPhoto sendPhoto = new SendPhoto();
+                    sendPhoto.setPhoto(new InputFile(media.getFId()));
+                    sendPhoto.setChatId(profile.getChatId());
+                    sendPhoto.setCaption(text);
+                    executePhoto(sendPhoto);
+                } else if (media.getMediaType().equals(MediaType.VIDEO)) {
+                    SendVideo sendVideo = new SendVideo();
+                    sendVideo.setCaption(text);
+                    sendVideo.setChatId(profile.getChatId());
+                    sendVideo.setVideo(new InputFile(media.getFId()));
+                    executeVideo(sendVideo);
+                }
+            }
+        }
     }
 
 }

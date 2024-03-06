@@ -9,6 +9,7 @@ import lombok.Setter;
 public class MediaDTO {
     private Integer id;
     private String fId;
+    private Long ownerId;
     private MediaType mediaType;
     private String mediaUrl;
 }

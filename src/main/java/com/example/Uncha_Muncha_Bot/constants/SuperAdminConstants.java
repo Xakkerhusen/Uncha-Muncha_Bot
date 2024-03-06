@@ -16,4 +16,10 @@ public interface SuperAdminConstants {
     String ENTERING_ID_FOR_MAKE_BLOCK = "Entering profile id for make block";
     String CREATE_ADVERTISING = "Advertising placement";
     String GETTING_BY_CHAT_ID = "Entering profile id for get profile";
+    String ACCEPTING_TO_CREATE_ADVERTISING = "Accepting to create advertising";
+    String ACCEPT = "Accept to create";
+    String NO_ACCEPT = " No accept to create";
+    String ENTERING_TEXT_FOR_ADVERTISING = "Entering description for advertising";
+    String ENTERING_MEDIA_FOR_ADVERTISING = "Entering media for advertising";
+    String ACCEPT_TO_SEND_ADVERTISING = "Accept to send advertising";
 }

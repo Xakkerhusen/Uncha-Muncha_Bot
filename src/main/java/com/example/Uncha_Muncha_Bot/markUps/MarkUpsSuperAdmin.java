@@ -7,7 +7,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -95,4 +98,27 @@ public class MarkUpsSuperAdmin {
 
         return new InlineKeyboardMarkup(rowList);
     }
+
+    public InlineKeyboardMarkup getAccept(Language language) {
+        List<InlineKeyboardButton> buttonsRow = new LinkedList<>();
+        List<List<InlineKeyboardButton>> rowList = new LinkedList<>();
+
+        InlineKeyboardButton button = new InlineKeyboardButton();
+
+        button.setText("✅");
+        button.setCallbackData(SuperAdminConstants.ACCEPT);
+
+        buttonsRow.add(button);
+        button = new InlineKeyboardButton();
+
+        button.setText("❌");
+        button.setCallbackData(SuperAdminConstants.NO_ACCEPT);
+
+        buttonsRow.add(button);
+        rowList.add(buttonsRow);
+
+        return new InlineKeyboardMarkup(rowList);
+    }
+
+
 }

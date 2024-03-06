@@ -64,7 +64,7 @@ public class ProfileEntity {
     private SalaryType selectedPurchaseType;
 
     @Column(name = "changing_element_id")
-    private Integer changingElementId;
+    private Long changingElementId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "language")

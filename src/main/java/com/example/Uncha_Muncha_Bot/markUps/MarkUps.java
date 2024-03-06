@@ -66,4 +66,30 @@ public class MarkUps {
                 .resizeKeyboard(true)
                 .build();
     }
+
+    public ReplyKeyboard getNextAndBackButtons(Language language) {
+        KeyboardRow row = new KeyboardRow();
+
+        KeyboardButton button = new KeyboardButton(resourceBundleService.getMessage("back",language));
+        row.add(button);
+        button = new KeyboardButton(resourceBundleService.getMessage("next",language));
+        row.add(button);
+
+        return ReplyKeyboardMarkup.builder()
+                .keyboard(List.of(row))
+                .resizeKeyboard(true)
+                .build();
+    }
+
+    public ReplyKeyboard getBackButton(Language language) {
+        KeyboardRow row = new KeyboardRow();
+
+        KeyboardButton button = new KeyboardButton(resourceBundleService.getMessage("back",language));
+        row.add(button);
+
+        return ReplyKeyboardMarkup.builder()
+                .keyboard(List.of(row))
+                .resizeKeyboard(true)
+                .build();
+    }
 }

@@ -17,6 +17,9 @@ public class MediaEntity {
     @Column(name = "f_id")
     private String fId;
 
+    @Column(name = "owner_id")
+    private Long ownerId;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "media_type")
     private MediaType mediaType;

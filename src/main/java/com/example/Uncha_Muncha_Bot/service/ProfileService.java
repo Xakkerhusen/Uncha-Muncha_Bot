@@ -2,6 +2,7 @@ package com.example.Uncha_Muncha_Bot.service;
 
 import com.example.Uncha_Muncha_Bot.dto.ProfileDTO;
 import com.example.Uncha_Muncha_Bot.entity.ProfileEntity;
+import com.example.Uncha_Muncha_Bot.enums.ActiveStatus;
 import com.example.Uncha_Muncha_Bot.enums.Language;
 import com.example.Uncha_Muncha_Bot.enums.ProfileRole;
 import com.example.Uncha_Muncha_Bot.repository.ProfileRepository;
@@ -166,5 +167,17 @@ public class ProfileService {
             }
         }
         return dtoList;
+    }
+
+    public void changeRole(String chatId, ProfileRole profileRole) {
+        profileRepository.changeRole(chatId,profileRole);
+    }
+
+    public void changeStatus(String chatId, ActiveStatus activeStatus) {
+        profileRepository.changeStatus(chatId,activeStatus);
+    }
+
+    public void changeChangingElementId(String chatId, Long advertisingId) {
+        profileRepository.changeChangingElementId(chatId, advertisingId);
     }
 }

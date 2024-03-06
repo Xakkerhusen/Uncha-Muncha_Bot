@@ -30,7 +30,7 @@ public class ProfileDTO {
     private ProfileRole role;
     private String currentStep;
     private SalaryType selectedPurchaseType;
-    private Integer changingElementId;
+    private Long changingElementId;
     private Language language;
 
     public ProfileDTO(Long id, String username, String chatId) {
