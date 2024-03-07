@@ -37,8 +37,17 @@ public class PharmacyEntity {
     @Column(name = "pharmacy_name")
     private String pharmacyName;
 
-    @Column(name = "info")
-    private String info;
+    @Column(name = "info_uz")
+    private String infoUz;
+
+    @Column(name = "info_tr")
+    private String infoTr;
+
+    @Column(name = "info_ru")
+    private String infoRu;
+
+    @Column(name = "info_en")
+    private String infoEn;
 
     @Column(name = "latitude")
     private Double latitude;
@@ -48,7 +57,7 @@ public class PharmacyEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "active_status")
-    private ActiveStatus activeStatus;
+    private ActiveStatus activeStatus=ActiveStatus.BLOCK;
 
     @Column(name = "created_date_time")
     private LocalDateTime createdDateTime;

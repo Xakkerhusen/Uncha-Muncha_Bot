@@ -63,4 +63,36 @@ public class MarkUpsUser {
 
         return new InlineKeyboardMarkup(rowList);
     }
+
+    /**Pharmacy menu (People,Animals,Back) Inline buttons*/
+    public InlineKeyboardMarkup pharmacyMenu(Language language) {
+        List<InlineKeyboardButton> buttonsRow = new LinkedList<>();
+        List<List<InlineKeyboardButton>> rowList = new LinkedList<>();
+
+        InlineKeyboardButton button = new InlineKeyboardButton();
+
+        button.setText(resourceBundleService.getMessage("pharmacy.for.people", language));
+        button.setCallbackData(PharmacyConstants.PHARMACY_FOR_PEOPLE);
+
+        buttonsRow.add(button);
+        rowList.add(buttonsRow);
+        button = new InlineKeyboardButton();
+        buttonsRow = new LinkedList<>();
+
+        button.setText(resourceBundleService.getMessage("pharmacy.for.animals", language));
+        button.setCallbackData(PharmacyConstants.PHARMACY_FOR_ANIMALS);
+
+        buttonsRow.add(button);
+        rowList.add(buttonsRow);
+        button = new InlineKeyboardButton();
+        buttonsRow = new LinkedList<>();
+
+        button.setText(resourceBundleService.getMessage("back", language));
+        button.setCallbackData(CommonConstants.BACK);
+
+        buttonsRow.add(button);
+        rowList.add(buttonsRow);
+
+        return new InlineKeyboardMarkup(rowList);
+    }
 }

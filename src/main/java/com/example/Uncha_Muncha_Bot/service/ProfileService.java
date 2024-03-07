@@ -135,7 +135,7 @@ public class ProfileService {
     }
 
     private List<ProfileDTO> toDTOList(Iterable<ProfileEntity> ownersList) {
-        List<ProfileDTO> dtoList=new LinkedList<>();
+        List<ProfileDTO> dtoList = new LinkedList<>();
         for (ProfileEntity entity : ownersList) {
             dtoList.add(toDTO(entity));
         }
@@ -147,7 +147,7 @@ public class ProfileService {
     }
 
     public List<ProfileDTO> getAdminList() {
-        List<ProfileDTO> dtoList =new LinkedList<>();
+        List<ProfileDTO> dtoList = new LinkedList<>();
         for (ProfileEntity entity : profileRepository.getAdminList()) {
             dtoList.add(toDTO(entity));
         }
@@ -155,26 +155,28 @@ public class ProfileService {
     }
 
     public void updateUsername(String chatId, String userName) {
-        profileRepository.updateUsername(userName,chatId);
+        profileRepository.updateUsername(userName, chatId);
     }
 
-    public List<ProfileDTO> getAllByRole(List<ProfileRole> roles) {
-        Iterable<ProfileEntity> all = profileRepository.findAll(Sort.by(Sort.Direction.DESC,"createdDateTime"));
-        List<ProfileDTO> dtoList=new LinkedList<>();
+    public List<ProfileDTO> getAllByRole(List<ProfileRole> roles, List<Language> languages) {
+        Iterable<ProfileEntity> all = profileRepository.findAll(Sort.by(Sort.Direction.DESC, "createdDateTime"));
+        List<ProfileDTO> dtoList = new LinkedList<>();
         for (ProfileEntity entity : all) {
-            if (roles.contains(entity.getRole())) {
-                dtoList.add(toDTO(entity));
+            if (entity.getLanguage()!=null&&languages.contains(entity.getLanguage())) {
+                if (roles.contains(entity.getRole())) {
+                    dtoList.add(toDTO(entity));
+                }
             }
         }
         return dtoList;
     }
 
     public void changeRole(String chatId, ProfileRole profileRole) {
-        profileRepository.changeRole(chatId,profileRole);
+        profileRepository.changeRole(chatId, profileRole);
     }
 
     public void changeStatus(String chatId, ActiveStatus activeStatus) {
-        profileRepository.changeStatus(chatId,activeStatus);
+        profileRepository.changeStatus(chatId, activeStatus);
     }
 
     public void changeChangingElementId(String chatId, Long advertisingId) {

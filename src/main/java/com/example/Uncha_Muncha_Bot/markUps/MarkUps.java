@@ -1,5 +1,7 @@
 package com.example.Uncha_Muncha_Bot.markUps;
 
+import com.example.Uncha_Muncha_Bot.constants.CommonConstants;
+import com.example.Uncha_Muncha_Bot.constants.SuperAdminConstants;
 import com.example.Uncha_Muncha_Bot.enums.Language;
 import com.example.Uncha_Muncha_Bot.service.ResourceBundleService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +20,11 @@ import java.util.List;
 public class MarkUps {
     @Autowired
     private ResourceBundleService resourceBundleService;
+
+    private List<String> timeList = List.of("00:00", "01:00", "02:00", "03:00", "04:00", "05:00",
+            "06:00", "07:00", "08:00", "09:00", "10:00", "11:00",
+            "12:00", "13:00", "14:00", "15:00", "16:00", "17:00",
+            "18:00", "19:00", "20:00", "21:00", "22:00", "23:00");
 
     public ReplyKeyboard adminButton(Language language) {
         return null;
@@ -91,5 +98,52 @@ public class MarkUps {
                 .keyboard(List.of(row))
                 .resizeKeyboard(true)
                 .build();
+    }
+
+    public InlineKeyboardMarkup getAccept(Language language) {
+        List<InlineKeyboardButton> buttonsRow = new LinkedList<>();
+        List<List<InlineKeyboardButton>> rowList = new LinkedList<>();
+
+        InlineKeyboardButton button = new InlineKeyboardButton();
+
+        button.setText("✅");
+        button.setCallbackData(SuperAdminConstants.ACCEPT);
+
+        buttonsRow.add(button);
+        button = new InlineKeyboardButton();
+
+        button.setText("❌");
+        button.setCallbackData(SuperAdminConstants.NO_ACCEPT);
+
+        buttonsRow.add(button);
+        rowList.add(buttonsRow);
+
+        return new InlineKeyboardMarkup(rowList);
+    }
+
+    public InlineKeyboardMarkup time() {
+        List<InlineKeyboardButton> buttons = new LinkedList<>();
+        List<List<InlineKeyboardButton>> rowList = new LinkedList<>();
+        InlineKeyboardButton button = new InlineKeyboardButton();
+
+        int count = 0;
+        // timeList(8:00,9:00,10:00)
+        for (String time : timeList) {
+            count++;
+            button.setText(time);
+            button.setCallbackData(time);
+
+            buttons.add(button);
+            button = new InlineKeyboardButton();
+            if (count % 3 == 0 || count == timeList.size()) {
+                rowList.add(buttons);
+                buttons = new LinkedList<>();
+            }
+        }
+        button.setText(CommonConstants.BACK);
+        button.setCallbackData(CommonConstants.BACK);
+        buttons.add(button);
+        rowList.add(buttons);
+        return new InlineKeyboardMarkup(rowList);
     }
 }

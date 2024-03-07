@@ -26,4 +26,7 @@ public class MediaEntity {
 
     @Column(name = "media_url")
     private String mediaUrl;
+
+    @Column(name = "visible")
+    private Boolean visible=true;
 }

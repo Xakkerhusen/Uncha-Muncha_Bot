@@ -37,4 +37,8 @@ public class AdvertisingService {
         }
         return dto;
     }
+
+    public void setSharedCount(int count, Long advertisingId) {
+        advertisingRepository.setSharedCount(count,advertisingId);
+    }
 }

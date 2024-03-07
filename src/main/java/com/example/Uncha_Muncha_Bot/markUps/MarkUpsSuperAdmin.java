@@ -95,6 +95,14 @@ public class MarkUpsSuperAdmin {
 
         buttonsRow.add(button);
         rowList.add(buttonsRow);
+        button = new InlineKeyboardButton();
+        buttonsRow = new LinkedList<>();
+
+        button.setText(resourceBundleService.getMessage("get.by.f.id", language));
+        button.setCallbackData(SuperAdminConstants.GET_BY_F_ID);
+
+        buttonsRow.add(button);
+        rowList.add(buttonsRow);
 
         return new InlineKeyboardMarkup(rowList);
     }
